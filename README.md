@@ -2,6 +2,17 @@
 
 A command-line tool that extracts complete metadata schema from PowerApps/Dataverse environments to provide full context for LLMs, documentation, and development workflows.
 
+## Quick Start (No Installation Required)
+
+**Download and run** - No .NET installation needed:
+
+1. Download the latest release: [powerapps-schema-win-x64.zip](https://github.com/glosrob/PowerApps.JsonSchema/releases)
+2. Extract the zip file
+3. Open PowerShell/Command Prompt in the extracted folder
+4. Run: `.\powerapps-schema.exe extract --url https://your-org.crm.dynamics.com`
+
+That's it! The tool will open a browser for authentication and extract your schema.
+
 ## Features
 
 - **CLI-First Design**: Fully scriptable and automatable
@@ -11,37 +22,43 @@ A command-line tool that extracts complete metadata schema from PowerApps/Datave
 - **Interactive Auth**: Secure browser-based Microsoft authentication
 - **Verbose Mode**: Detailed progress tracking when needed
 
-## Installation
+## Usage
+
+### Using Pre-built Executable (Recommended)
+
+Download from [Releases](https://github.com/glosrob/PowerApps.JsonSchema/releases):
+
+```bash
+# Windows
+.\powerapps-schema.exe extract --url https://yourorg.crm.dynamics.com
+```
+
+### Building from Source
+
+If you prefer to build from source:
 
 ```bash
 dotnet restore
 dotnet build
-```
-
-## Usage
-
-### Basic Command
-
-```bash
-dotnet run -- extract --url https://yourorg.crm.dynamics.com
-```
-
-### Extract Specific Solution
-
-```bash
-dotnet run -- extract --url https://yourorg.crm.dynamics.com --solution MyCustomSolution
+powerapps-schema extract --url https://yourorg.crm.dynamics.com --solution MyCustomSolution
 ```
 
 ### Custom Output File
 
 ```bash
-dotnet run -- extract -u https://yourorg.crm.dynamics.com -o custom-schema.json
+powerapps-schema extract -u https://yourorg.crm.dynamics.com -o custom-schema.json
 ```
 
 ### Verbose Mode
 
 ```bash
-dotnet run -- extract -u https://yourorg.crm.dynamics.com -v
+powerapps-schema extract -u https://yourorg.crm.dynamics.com -v
+```
+
+### Using Connection String (Advanced)
+
+```bash
+powerapps-schema extract -u https://yourorg.crm.dynamics.com -v
 ```
 
 ### Using Connection String (Advanced)
@@ -63,6 +80,16 @@ Options:
   -v, --verbose                      Enable verbose output
   --help                             Show help
 ```
+
+### Finding Your Environment URL
+
+Your PowerApps environment URL typically looks like:
+- **North America**: `https://yourorg.crm.dynamics.com`
+- **Europe**: `https://yourorg.crm4.dynamics.com`
+- **Asia**: `https://yourorg.crm5.dynamics.com`
+- **Australia**: `https://yourorg.crm6.dynamics.com`
+
+Find it in the Power Platform Admin Center or from your PowerApps URL.
 
 ## Output Format
 
@@ -92,27 +119,27 @@ The tool generates a comprehensive JSON schema:
       ]
     }
   ],
-  "Relationships": [...]
-}
-```
-
-## Use Cases
-
-### LLM Context
-Provide complete environment schema to AI assistants:
-```bash
-# Extract schema and feed to LLM
-dotnet run -- extract -u https://org.crm.dynamics.com -o schema.json
+powerapps-schema extract -u https://org.crm.dynamics.com -o schema.json
 # Then attach schema.json to your LLM conversation
 ```
 
 ### CI/CD Integration
 ```bash
 # In your pipeline
-dotnet run -- extract --url $POWERAPP_URL --solution $SOLUTION_NAME --output artifacts/schema.json
+powerapps-schema extract --url $POWERAPP_URL --solution $SOLUTION_NAME --output artifacts/schema.json
 ```
 
 ### Automated Documentation
+```bash
+# Schedule daily extraction
+powerapps-schema extract -u $ENV_URL -o docs/current-schema.json
+```
+
+### Schema Comparison
+```bash
+# Extract from different environments
+powerapps-schema extract -u https://dev.crm.dynamics.com -o dev-schema.json
+powerapps-schema Documentation
 ```bash
 # Schedule daily extraction
 dotnet run -- extract -u $ENV_URL -o docs/current-schema.json
@@ -144,20 +171,21 @@ dotnet publish -c Release -r win-x64 --self-contained
 
 # Executable will be in: bin/Release/net8.0/win-x64/publish/powerapps-schema.exe
 ```
-
-Then you can run directly:
-```bash
-powerapps-schema extract -u https://org.crm.dynamics.com
-```
-
-## Examples
-
-**Quick extraction:**
-```bash
-dotnet run -- extract -u https://contoso.crm.dynamics.com
+powerapps-schema extract -u https://contoso.crm.dynamics.com
 ```
 
 **Solution-specific with verbose output:**
+```bash
+powerapps-schema extract -u https://contoso.crm.dynamics.com -s ContosoSales -v
+```
+
+**Scripted extraction:**
+```powershell
+# PowerShell
+$solutions = @("Sales", "Marketing", "Service")
+foreach ($solution in $solutions) {
+    .\powerapps-schema.exe extract -u $env:ENV_URL -s $solution -o "$solution-schema.json"
+}lution-specific with verbose output:**
 ```bash
 dotnet run -- extract -u https://contoso.crm.dynamics.com -s ContosoSales -v
 ```
