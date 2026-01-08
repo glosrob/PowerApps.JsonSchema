@@ -72,7 +72,18 @@ public class ExcelExporter
         int row = headerRow + 1;
         foreach (var entity in schema.Entities.OrderBy(e => e.LogicalName))
         {
+            // Create hyperlink to entity sheet
+            var sheetName = entity.LogicalName;
+            if (sheetName.Length > 31)
+                sheetName = sheetName.Substring(0, 31);
+            
+            sheetName = sheetName.Replace(":", "_").Replace("/", "_").Replace("\\", "_")
+                                 .Replace("?", "_").Replace("*", "_").Replace("[", "_").Replace("]", "_");
+            
             worksheet.Cell(row, 1).Value = entity.LogicalName;
+            worksheet.Cell(row, 1).SetHyperlink(new XLHyperlink($"'{sheetName}'!A1"));
+            worksheet.Cell(row, 1).Style.Font.FontColor = XLColor.Blue;
+            worksheet.Cell(row, 1).Style.Font.Underline = XLFontUnderlineValues.Single;
             worksheet.Cell(row, 2).Value = entity.DisplayName ?? "";
             worksheet.Cell(row, 3).Value = entity.Attributes.Count;
             worksheet.Cell(row, 4).Value = entity.IsCustomEntity ? "Yes" : "No";
@@ -115,49 +126,55 @@ public class ExcelExporter
         
         var worksheet = workbook.Worksheets.Add(sheetName);
 
+        // Back to Summary link
+        worksheet.Cell(1, 1).Value = "← Back to Summary";
+        worksheet.Cell(1, 1).SetHyperlink(new XLHyperlink("'Summary'!A1"));
+        worksheet.Cell(1, 1).Style.Font.FontColor = XLColor.Blue;
+        worksheet.Cell(1, 1).Style.Font.Underline = XLFontUnderlineValues.Single;
+
         // Entity Information Header
-        worksheet.Cell(1, 1).Value = "Entity Information";
-        worksheet.Cell(1, 1).Style.Font.Bold = true;
-        worksheet.Cell(1, 1).Style.Font.FontSize = 14;
-        
-        worksheet.Cell(2, 1).Value = "Logical Name:";
-        worksheet.Cell(2, 2).Value = entity.LogicalName;
-        worksheet.Cell(2, 1).Style.Font.Bold = true;
-        
-        worksheet.Cell(3, 1).Value = "Display Name:";
-        worksheet.Cell(3, 2).Value = entity.DisplayName ?? "";
+        worksheet.Cell(3, 1).Value = "Entity Information";
         worksheet.Cell(3, 1).Style.Font.Bold = true;
+        worksheet.Cell(3, 1).Style.Font.FontSize = 14;
         
-        worksheet.Cell(4, 1).Value = "Schema Name:";
-        worksheet.Cell(4, 2).Value = entity.SchemaName;
+        worksheet.Cell(4, 1).Value = "Logical Name:";
+        worksheet.Cell(4, 2).Value = entity.LogicalName;
         worksheet.Cell(4, 1).Style.Font.Bold = true;
         
-        worksheet.Cell(5, 1).Value = "Is Custom Entity:";
-        worksheet.Cell(5, 2).Value = entity.IsCustomEntity ? "Yes" : "No";
+        worksheet.Cell(5, 1).Value = "Display Name:";
+        worksheet.Cell(5, 2).Value = entity.DisplayName ?? "";
         worksheet.Cell(5, 1).Style.Font.Bold = true;
         
-        worksheet.Cell(6, 1).Value = "Is Activity:";
-        worksheet.Cell(6, 2).Value = entity.IsActivity ? "Yes" : "No";
+        worksheet.Cell(6, 1).Value = "Schema Name:";
+        worksheet.Cell(6, 2).Value = entity.SchemaName;
         worksheet.Cell(6, 1).Style.Font.Bold = true;
         
-        worksheet.Cell(7, 1).Value = "Primary ID:";
-        worksheet.Cell(7, 2).Value = entity.PrimaryIdAttribute ?? "";
+        worksheet.Cell(7, 1).Value = "Is Custom Entity:";
+        worksheet.Cell(7, 2).Value = entity.IsCustomEntity ? "Yes" : "No";
         worksheet.Cell(7, 1).Style.Font.Bold = true;
         
-        worksheet.Cell(8, 1).Value = "Primary Name:";
-        worksheet.Cell(8, 2).Value = entity.PrimaryNameAttribute ?? "";
+        worksheet.Cell(8, 1).Value = "Is Activity:";
+        worksheet.Cell(8, 2).Value = entity.IsActivity ? "Yes" : "No";
         worksheet.Cell(8, 1).Style.Font.Bold = true;
         
-        worksheet.Cell(9, 1).Value = "Ownership Type:";
-        worksheet.Cell(9, 2).Value = entity.OwnershipType ?? "";
+        worksheet.Cell(9, 1).Value = "Primary ID:";
+        worksheet.Cell(9, 2).Value = entity.PrimaryIdAttribute ?? "";
         worksheet.Cell(9, 1).Style.Font.Bold = true;
         
-        worksheet.Cell(10, 1).Value = "Description:";
-        worksheet.Cell(10, 2).Value = entity.Description ?? "";
+        worksheet.Cell(10, 1).Value = "Primary Name:";
+        worksheet.Cell(10, 2).Value = entity.PrimaryNameAttribute ?? "";
         worksheet.Cell(10, 1).Style.Font.Bold = true;
+        
+        worksheet.Cell(11, 1).Value = "Ownership Type:";
+        worksheet.Cell(11, 2).Value = entity.OwnershipType ?? "";
+        worksheet.Cell(11, 1).Style.Font.Bold = true;
+        
+        worksheet.Cell(12, 1).Value = "Description:";
+        worksheet.Cell(12, 2).Value = entity.Description ?? "";
+        worksheet.Cell(12, 1).Style.Font.Bold = true;
 
         // Attributes Section
-        int startRow = 12;
+        int startRow = 14;
         worksheet.Cell(startRow, 1).Value = "Attributes";
         worksheet.Cell(startRow, 1).Style.Font.Bold = true;
         worksheet.Cell(startRow, 1).Style.Font.FontSize = 12;
