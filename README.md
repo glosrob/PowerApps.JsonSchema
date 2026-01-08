@@ -80,8 +80,27 @@ powerapps-schema extract -u https://yourorg.crm.dynamics.com --format csv
 ```bash
 powerapps-schema extract -u https://yourorg.crm.dynamics.com -v
 ```
-f, --format <format>              Output format: json, xlsx, or csv [default: json]
-  -
+
+### Filtering Attributes
+
+**Filter by prefix** - Only include attributes starting with a specific prefix (great for custom fields):
+```bash
+powerapps-schema extract -u https://yourorg.crm.dynamics.com --attribute-prefix "new_"
+```
+
+**Exclude common fields** - Remove system fields you don't need:
+```bash
+powerapps-schema extract -u https://yourorg.crm.dynamics.com \
+  --exclude-attributes "createdon,modifiedon,createdby,modifiedby,statecode,statuscode"
+```
+
+**Combine filters**:
+```bash
+powerapps-schema extract -u https://yourorg.crm.dynamics.com \
+  --attribute-prefix "anc_" \
+  --exclude-attributes "anc_legacyid,anc_deprecated"
+```
+
 ### Using Connection String (Advanced)
 
 ```bash
@@ -100,14 +119,17 @@ dotnet run -- extract -c "AuthType=OAuth;Username=user@org.com;Url=https://org.c
 powerapps-schema extract [options]
 
 Options:
-  -u, --url <url>                    Environment URL (required)
-  -s, --solution <solution>          Solution unique name (optional)
-  -o, --output <output>              Output file path [default: powerapp-schema.json]
-  -c, --connection-string <string>   Connection string for advanced scenarios
-  --client-id <clientid>             Azure AD Application (Client) ID (or set DATAVERSE_CLIENT_ID env var)
-  --client-secret <secret>           Azure AD Application Client Secret (or set DATAVERSE_CLIENT_SECRET env var)
-  -v, --verbose                      Enable verbose output
-  --help                             Show help
+  -u, --url <url>                        Environment URL (required)
+  -s, --solution <solution>              Solution unique name (optional)
+  -o, --output <output>                  Output file path [default: powerapp-schema.json]
+  -f, --format <format>                  Output format: json, xlsx, or csv [default: json]
+  -c, --connection-string <string>       Connection string for advanced scenarios
+  --client-id <clientid>                 Azure AD Application (Client) ID (or set DATAVERSE_CLIENT_ID env var)
+  --client-secret <secret>               Azure AD Application Client Secret (or set DATAVERSE_CLIENT_SECRET env var)
+  --attribute-prefix <prefix>            Only include attributes starting with this prefix
+  --exclude-attributes <attrs>           Comma-separated list of attribute names to exclude
+  -v, --verbose                          Enable verbose output
+  --help                                 Show help
 ```
 
 ### Authentication Methods

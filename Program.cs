@@ -53,6 +53,14 @@ class Program
             aliases: new[] { "--verbose", "-v" },
             description: "Enable verbose output");
 
+        var attributePrefixOption = new Option<string?>(
+            aliases: new[] { "--attribute-prefix", "--attr-prefix" },
+            description: "Only include attributes starting with this prefix (e.g., 'rob_')");
+
+        var excludeAttributesOption = new Option<string?>(
+            aliases: new[] { "--exclude-attributes", "--exclude-attrs" },
+            description: "Comma-separated list of attribute names to exclude (e.g., 'createdon,modifiedon,createdby,modifiedby')");
+
         extractCommand.AddOption(urlOption);
         extractCommand.AddOption(solutionOption);
         extractCommand.AddOption(outputOption);
@@ -61,18 +69,31 @@ class Program
         extractCommand.AddOption(clientIdOption);
         extractCommand.AddOption(clientSecretOption);
         extractCommand.AddOption(verboseOption);
+        extractCommand.AddOption(attributePrefixOption);
+        extractCommand.AddOption(excludeAttributesOption);
 
-        extractCommand.SetHandler(async (url, solution, output, format, connectionString, clientId, clientSecret, verbose) =>
+        extractCommand.SetHandler(async (context) =>
         {
-            await ExtractSchemaAsync(url, solution, output, format, connectionString, clientId, clientSecret, verbose);
-        }, urlOption, solutionOption, outputOption, formatOption, connectionStringOption, clientIdOption, clientSecretOption, verboseOption);
+            var url = context.ParseResult.GetValueForOption(urlOption)!;
+            var solution = context.ParseResult.GetValueForOption(solutionOption);
+            var output = context.ParseResult.GetValueForOption(outputOption)!;
+            var format = context.ParseResult.GetValueForOption(formatOption)!;
+            var connectionString = context.ParseResult.GetValueForOption(connectionStringOption);
+            var clientId = context.ParseResult.GetValueForOption(clientIdOption);
+            var clientSecret = context.ParseResult.GetValueForOption(clientSecretOption);
+            var verbose = context.ParseResult.GetValueForOption(verboseOption);
+            var attributePrefix = context.ParseResult.GetValueForOption(attributePrefixOption);
+            var excludeAttributes = context.ParseResult.GetValueForOption(excludeAttributesOption);
+            
+            await ExtractSchemaAsync(url, solution, output, format, connectionString, clientId, clientSecret, verbose, attributePrefix, excludeAttributes);
+        });
 
         rootCommand.AddCommand(extractCommand);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    static async Task ExtractSchemaAsync(string url, string? solution, string output, string format, string? connectionString, string? clientId, string? clientSecret, bool verbose)
+    static async Task ExtractSchemaAsync(string url, string? solution, string output, string format, string? connectionString, string? clientId, string? clientSecret, bool verbose, string? attributePrefix, string? excludeAttributes)
     {
         try
         {
@@ -83,7 +104,16 @@ class Program
                 Console.WriteLine($"Environment URL: {url}");
                 Console.WriteLine($"Solution: {solution ?? "(all metadata)"}");
                 Console.WriteLine($"Output: {output}");
-                Console.WriteLine($"Format: {format}\n");
+                Console.WriteLine($"Format: {format}");
+                if (!string.IsNullOrWhiteSpace(attributePrefix))
+                {
+                    Console.WriteLine($"Attribute Prefix Filter: {attributePrefix}");
+                }
+                if (!string.IsNullOrWhiteSpace(excludeAttributes))
+                {
+                    Console.WriteLine($"Excluded Attributes: {excludeAttributes}");
+                }
+                Console.WriteLine();
             }
 
             Console.WriteLine("Connecting to PowerApps environment...");
@@ -167,8 +197,19 @@ class Program
             }
 
             Console.WriteLine("Extracting schema...");
+            
+            // Parse exclude list
+            HashSet<string>? excludeList = null;
+            if (!string.IsNullOrWhiteSpace(excludeAttributes))
+            {
+                excludeList = new HashSet<string>(
+                    excludeAttributes.Split(',').Select(s => s.Trim().ToLowerInvariant()),
+                    StringComparer.OrdinalIgnoreCase
+                );
+            }
+            
             var extractor = new SchemaExtractor(serviceClient, verbose);
-            var schema = await extractor.ExtractSchema(solution);
+            var schema = await extractor.ExtractSchema(solution, attributePrefix, excludeList);
 
             // Determine output file name
             string fileName = output;

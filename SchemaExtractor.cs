@@ -17,7 +17,7 @@ public class SchemaExtractor
         _verbose = verbose;
     }
 
-    public async Task<PowerAppsSchema> ExtractSchema(string? solutionName = null)
+    public async Task<PowerAppsSchema> ExtractSchema(string? solutionName = null, string? attributePrefix = null, HashSet<string>? excludeAttributes = null)
     {
         var schema = new PowerAppsSchema
         {
@@ -87,6 +87,20 @@ public class SchemaExtractor
             {
                 foreach (var attribute in entity.Attributes.OrderBy(a => a.LogicalName))
                 {
+                    // Apply attribute prefix filter
+                    if (!string.IsNullOrWhiteSpace(attributePrefix) && 
+                        !attribute.LogicalName.StartsWith(attributePrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // Apply exclude filter
+                    if (excludeAttributes != null && 
+                        excludeAttributes.Contains(attribute.LogicalName))
+                    {
+                        continue;
+                    }
+
                     entitySchema.Attributes.Add(new AttributeSchema
                     {
                         LogicalName = attribute.LogicalName,
