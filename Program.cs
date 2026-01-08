@@ -31,7 +31,15 @@ class Program
 
         var connectionStringOption = new Option<string?>(
             aliases: new[] { "--connection-string", "-c" },
-            description: "Dataverse connection string (alternative to --url for advanced scenarios)");
+            description: "Dataverse connection string (alternative to individual auth options)");
+
+        var clientIdOption = new Option<string?>(
+            aliases: new[] { "--client-id" },
+            description: "Azure AD Application (Client) ID for service principal authentication (or set DATAVERSE_CLIENT_ID env var)");
+
+        var clientSecretOption = new Option<string?>(
+            aliases: new[] { "--client-secret" },
+            description: "Azure AD Application Client Secret for service principal authentication (or set DATAVERSE_CLIENT_SECRET env var)");
 
         var verboseOption = new Option<bool>(
             aliases: new[] { "--verbose", "-v" },
@@ -41,19 +49,21 @@ class Program
         extractCommand.AddOption(solutionOption);
         extractCommand.AddOption(outputOption);
         extractCommand.AddOption(connectionStringOption);
+        extractCommand.AddOption(clientIdOption);
+        extractCommand.AddOption(clientSecretOption);
         extractCommand.AddOption(verboseOption);
 
-        extractCommand.SetHandler(async (url, solution, output, connectionString, verbose) =>
+        extractCommand.SetHandler(async (url, solution, output, connectionString, clientId, clientSecret, verbose) =>
         {
-            await ExtractSchemaAsync(url, solution, output, connectionString, verbose);
-        }, urlOption, solutionOption, outputOption, connectionStringOption, verboseOption);
+            await ExtractSchemaAsync(url, solution, output, connectionString, clientId, clientSecret, verbose);
+        }, urlOption, solutionOption, outputOption, connectionStringOption, clientIdOption, clientSecretOption, verboseOption);
 
         rootCommand.AddCommand(extractCommand);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    static async Task ExtractSchemaAsync(string url, string? solution, string output, string? connectionString, bool verbose)
+    static async Task ExtractSchemaAsync(string url, string? solution, string output, string? connectionString, string? clientId, string? clientSecret, bool verbose)
     {
         try
         {
@@ -68,25 +78,47 @@ class Program
 
             Console.WriteLine("Connecting to PowerApps environment...");
 
+            // Check for environment variables if options not provided
+            clientId ??= Environment.GetEnvironmentVariable("DATAVERSE_CLIENT_ID");
+            clientSecret ??= Environment.GetEnvironmentVariable("DATAVERSE_CLIENT_SECRET");
+
             ServiceClient serviceClient;
             
             try
             {
                 if (!string.IsNullOrWhiteSpace(connectionString))
                 {
+                    // Use provided connection string
+                    if (verbose)
+                    {
+                        Console.WriteLine("Using provided connection string");
+                    }
                     serviceClient = new ServiceClient(connectionString);
                 }
-                else
+                else if (!string.IsNullOrWhiteSpace(clientId) && !string.IsNullOrWhiteSpace(clientSecret))
                 {
-                    // Use interactive authentication - build connection string for OAuth
-                    var connectionString2 = $"AuthType=OAuth;Url={url};AppId=51f81489-12ee-4a9e-aaae-a2591f45987d;RedirectUri=http://localhost;LoginPrompt=Auto";
+                    // Use client credentials (service principal)
+                    var connString = $"AuthType=ClientSecret;Url={url};ClientId={clientId};ClientSecret={clientSecret}";
                     
                     if (verbose)
                     {
-                        Console.WriteLine($"Connection string: {connectionString2}");
+                        Console.WriteLine("Using service principal authentication (ClientId/ClientSecret)");
+                        Console.WriteLine($"Client ID: {clientId}");
                     }
                     
-                    serviceClient = new ServiceClient(connectionString2);
+                    serviceClient = new ServiceClient(connString);
+                }
+                else
+                {
+                    // Use interactive authentication
+                    var connString = $"AuthType=OAuth;Url={url};AppId=51f81489-12ee-4a9e-aaae-a2591f45987d;RedirectUri=http://localhost;LoginPrompt=Auto";
+                    
+                    if (verbose)
+                    {
+                        Console.WriteLine("Using interactive OAuth authentication");
+                    }
+                    
+                    serviceClient = new ServiceClient(connString);
                 }
             }
             catch (Exception ex)

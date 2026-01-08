@@ -76,9 +76,39 @@ Options:
   -u, --url <url>                    Environment URL (required)
   -s, --solution <solution>          Solution unique name (optional)
   -o, --output <output>              Output file path [default: powerapp-schema.json]
-  -c, --connection-string <string>   Connection string for advanced auth
+  -c, --connection-string <string>   Connection string for advanced scenarios
+  --client-id <clientid>             Azure AD Application (Client) ID (or set DATAVERSE_CLIENT_ID env var)
+  --client-secret <secret>           Azure AD Application Client Secret (or set DATAVERSE_CLIENT_SECRET env var)
   -v, --verbose                      Enable verbose output
   --help                             Show help
+```
+
+### Authentication Methods
+
+**1. Interactive (Default)**
+```bash
+powerapps-schema extract --url https://org.crm.dynamics.com
+```
+Opens a browser for Microsoft account sign-in.
+
+**2. Service Principal (Client Credentials)**
+```bash
+powerapps-schema extract --url https://org.crm.dynamics.com \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret YOUR_CLIENT_SECRET
+```
+
+**3. Environment Variables (Best for CI/CD)**
+```bash
+export DATAVERSE_CLIENT_ID="your-client-id"
+export DATAVERSE_CLIENT_SECRET="your-client-secret"
+powerapps-schema extract --url https://org.crm.dynamics.com
+```
+
+**4. Connection String (Advanced)**
+```bash
+powerapps-schema extract \
+  --connection-string "AuthType=ClientSecret;Url=...;ClientId=...;ClientSecret=..."
 ```
 
 ### Finding Your Environment URL
