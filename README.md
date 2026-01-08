@@ -85,7 +85,7 @@ powerapps-schema extract -u https://yourorg.crm.dynamics.com -v
 
 **Filter by prefix** - Only include attributes starting with a specific prefix (great for custom fields):
 ```bash
-powerapps-schema extract -u https://yourorg.crm.dynamics.com --attribute-prefix "new_"
+powerapps-schema extract -u https://yourorg.crm.dynamics.com --attribute-prefix "rob_"
 ```
 
 **Exclude common fields** - Remove system fields you don't need:
@@ -97,8 +97,8 @@ powerapps-schema extract -u https://yourorg.crm.dynamics.com \
 **Combine filters**:
 ```bash
 powerapps-schema extract -u https://yourorg.crm.dynamics.com \
-  --attribute-prefix "anc_" \
-  --exclude-attributes "anc_legacyid,anc_deprecated"
+  --attribute-prefix "rob_" \
+  --exclude-attributes "rob_legacyid,rob_deprecated"
 ```
 
 ### Using Connection String (Advanced)
