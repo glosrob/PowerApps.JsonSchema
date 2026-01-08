@@ -32,3 +32,10 @@ powerapp-schema*.json
 project.lock.json
 project.fragment.lock.json
 artifacts/
+# PowerApps Schema Outputs (customer-specific data)
+*-schema.json
+*-schema.xlsx
+*-schema.csv
+powerapp-schema*.json
+powerapp-schema*.xlsx
+powerapp-schema*.csv

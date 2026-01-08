@@ -29,6 +29,14 @@ class Program
             getDefaultValue: () => "powerapp-schema.json",
             description: "Output file path");
 
+        var formatOption = new Option<string>(
+            aliases: new[] { "--format", "-f" },
+            getDefaultValue: () => "json",
+            description: "Output format: json, xlsx, or csv")
+        {
+            ArgumentHelpName = "format"
+        };
+
         var connectionStringOption = new Option<string?>(
             aliases: new[] { "--connection-string", "-c" },
             description: "Dataverse connection string (alternative to individual auth options)");
@@ -48,22 +56,23 @@ class Program
         extractCommand.AddOption(urlOption);
         extractCommand.AddOption(solutionOption);
         extractCommand.AddOption(outputOption);
+        extractCommand.AddOption(formatOption);
         extractCommand.AddOption(connectionStringOption);
         extractCommand.AddOption(clientIdOption);
         extractCommand.AddOption(clientSecretOption);
         extractCommand.AddOption(verboseOption);
 
-        extractCommand.SetHandler(async (url, solution, output, connectionString, clientId, clientSecret, verbose) =>
+        extractCommand.SetHandler(async (url, solution, output, format, connectionString, clientId, clientSecret, verbose) =>
         {
-            await ExtractSchemaAsync(url, solution, output, connectionString, clientId, clientSecret, verbose);
-        }, urlOption, solutionOption, outputOption, connectionStringOption, clientIdOption, clientSecretOption, verboseOption);
+            await ExtractSchemaAsync(url, solution, output, format, connectionString, clientId, clientSecret, verbose);
+        }, urlOption, solutionOption, outputOption, formatOption, connectionStringOption, clientIdOption, clientSecretOption, verboseOption);
 
         rootCommand.AddCommand(extractCommand);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    static async Task ExtractSchemaAsync(string url, string? solution, string output, string? connectionString, string? clientId, string? clientSecret, bool verbose)
+    static async Task ExtractSchemaAsync(string url, string? solution, string output, string format, string? connectionString, string? clientId, string? clientSecret, bool verbose)
     {
         try
         {
@@ -73,7 +82,8 @@ class Program
                 Console.WriteLine("===========================\n");
                 Console.WriteLine($"Environment URL: {url}");
                 Console.WriteLine($"Solution: {solution ?? "(all metadata)"}");
-                Console.WriteLine($"Output: {output}\n");
+                Console.WriteLine($"Output: {output}");
+                Console.WriteLine($"Format: {format}\n");
             }
 
             Console.WriteLine("Connecting to PowerApps environment...");
@@ -167,17 +177,50 @@ class Program
                 fileName = $"powerapp-schema-{solution}.json";
             }
 
-            var options = new JsonSerializerOptions
+            // Validate format
+            format = format.ToLowerInvariant();
+            if (format != "json" && format != "xlsx" && format != "csv")
             {
-                WriteIndented = true,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
+                Console.WriteLine($"Error: Invalid format '{format}'. Supported formats: json, xlsx, csv");
+                return;
+            }
 
-            string json = JsonSerializer.Serialize(schema, options);
-            await File.WriteAllTextAsync(fileName, json);
+            // Adjust file extension based on format
+            if (format == "xlsx" && !fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                fileName = Path.ChangeExtension(fileName, ".xlsx");
+            }
+            else if (format == "csv" && !fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                fileName = Path.ChangeExtension(fileName, ".csv");
+            }
+
+            // Export based on format
+            if (format == "json")
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+
+                string json = JsonSerializer.Serialize(schema, options);
+                await File.WriteAllTextAsync(fileName, json);
+            }
+            else if (format == "xlsx")
+            {
+                Console.WriteLine("Generating Excel workbook...");
+                ExcelExporter.ExportToExcel(schema, fileName);
+            }
+            else if (format == "csv")
+            {
+                Console.WriteLine("Generating CSV file...");
+                ExcelExporter.ExportToCsv(schema, fileName);
+            }
 
             Console.WriteLine($"\n✓ Schema extracted successfully!");
             Console.WriteLine($"Output: {Path.GetFullPath(fileName)}");
+            Console.WriteLine($"Format: {format.ToUpperInvariant()}");
             Console.WriteLine($"\nStatistics:");
             Console.WriteLine($"  Entities: {schema.Entities.Count}");
             Console.WriteLine($"  Attributes: {schema.Entities.Sum(e => e.Attributes.Count)}");

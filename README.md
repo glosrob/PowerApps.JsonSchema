@@ -2,6 +2,8 @@
 
 A command-line tool that extracts complete metadata schema from PowerApps/Dataverse environments to provide full context for LLMs, documentation, and development workflows.
 
+> **Note**: This tool was built with assistance from **Claude Sonnet 4.5** (Anthropic AI). All code in this repository was generated through an AI-assisted development process.
+
 ## Quick Start (No Installation Required)
 
 **Download and run** - No .NET installation needed:
@@ -17,9 +19,10 @@ That's it! The tool will open a browser for authentication and extract your sche
 
 - **CLI-First Design**: Fully scriptable and automatable
 - **LLM-Ready**: Perfect for providing context to AI coding assistants
+- **Multiple Export Formats**: JSON, Excel (XLSX), and CSV outputs
 - **Complete Metadata**: Extracts entities, attributes, relationships, option sets, and validation rules
 - **Solution Filtering**: Extract schema for specific solutions or entire environments
-- **Interactive Auth**: Secure browser-based Microsoft authentication
+- **Flexible Authentication**: Interactive OAuth, service principal (client ID/secret), or environment variables
 - **Verbose Mode**: Detailed progress tracking when needed
 
 ## Usage
@@ -49,12 +52,36 @@ powerapps-schema extract --url https://yourorg.crm.dynamics.com --solution MyCus
 powerapps-schema extract -u https://yourorg.crm.dynamics.com -o custom-schema.json
 ```
 
+### Export Formats
+
+**JSON (default)** - Machine-readable format for LLMs and tooling:
+```bash
+powerapps-schema extract -u https://yourorg.crm.dynamics.com --format json
+```
+
+**Excel (XLSX)** - Stakeholder-friendly format with one sheet per entity:
+```bash
+powerapps-schema extract -u https://yourorg.crm.dynamics.com --format xlsx
+```
+Creates a workbook with:
+- Summary sheet (environment, solution name, generation time, entity list)
+- One sheet per entity showing:
+  - Entity information (logical name, display name, custom flag, activity flag, etc.)
+  - All attributes with full metadata (type, description, required level, max length, etc.)
+- Option Sets sheet (all picklist values across all entities)
+
+**CSV** - Simple flat file for basic viewing:
+```bash
+powerapps-schema extract -u https://yourorg.crm.dynamics.com --format csv
+```
+
 ### Verbose Mode
 
 ```bash
 powerapps-schema extract -u https://yourorg.crm.dynamics.com -v
 ```
-
+f, --format <format>              Output format: json, xlsx, or csv [default: json]
+  -
 ### Using Connection String (Advanced)
 
 ```bash
