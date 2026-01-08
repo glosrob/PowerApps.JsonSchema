@@ -70,21 +70,52 @@ class Program
 
             ServiceClient serviceClient;
             
-            if (!string.IsNullOrWhiteSpace(connectionString))
+            try
             {
-                serviceClient = new ServiceClient(connectionString);
+                if (!string.IsNullOrWhiteSpace(connectionString))
+                {
+                    serviceClient = new ServiceClient(connectionString);
+                }
+                else
+                {
+                    // Use interactive authentication - build connection string for OAuth
+                    var connectionString2 = $"AuthType=OAuth;Url={url};AppId=51f81489-12ee-4a9e-aaae-a2591f45987d;RedirectUri=http://localhost;LoginPrompt=Auto";
+                    
+                    if (verbose)
+                    {
+                        Console.WriteLine($"Connection string: {connectionString2}");
+                    }
+                    
+                    serviceClient = new ServiceClient(connectionString2);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Use interactive authentication - build connection string for OAuth
-                var connectionString2 = $"AuthType=OAuth;Url={url};AppId=51f81489-12ee-4a9e-aaae-a2591f45987d;RedirectUri=app://58145B91-0C36-4500-8554-080854F2AC97;LoginPrompt=Auto";
-                serviceClient = new ServiceClient(connectionString2);
+                Console.Error.WriteLine($"Error: Exception during connection initialization");
+                Console.Error.WriteLine($"Message: {ex.Message}");
+                
+                if (verbose)
+                {
+                    Console.Error.WriteLine($"\nFull Exception:");
+                    Console.Error.WriteLine(ex.ToString());
+                }
+                
+                Environment.Exit(1);
+                return;
             }
 
             if (!serviceClient.IsReady)
             {
                 Console.Error.WriteLine($"Error: Failed to connect to environment");
-                Console.Error.WriteLine($"Details: {serviceClient.LastError}");
+                Console.Error.WriteLine($"Last Error: {serviceClient.LastError}");
+                Console.Error.WriteLine($"Last Exception: {serviceClient.LastException?.Message}");
+                
+                if (verbose && serviceClient.LastException != null)
+                {
+                    Console.Error.WriteLine($"\nFull Exception Details:");
+                    Console.Error.WriteLine(serviceClient.LastException.ToString());
+                }
+                
                 Environment.Exit(1);
             }
 
