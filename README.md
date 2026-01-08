@@ -6,12 +6,20 @@ A command-line tool that extracts complete metadata schema from PowerApps/Datave
 
 ## Quick Start (No Installation Required)
 
-**Download and run** - No .NET installation needed:
+## Quick Start (No Installation Required)
 
-1. Download the latest release: [powerapps-schema-win-x64.zip](https://github.com/glosrob/PowerApps.JsonSchema/releases)
+**Option 1: Self-contained** (No .NET required) - Best for end users:
+
+1. Download: [powerapps-schema-win-x64.zip](https://github.com/glosrob/PowerApps.JsonSchema/releases)
 2. Extract the zip file
 3. Open PowerShell/Command Prompt in the extracted folder
 4. Run: `.\powerapps-schema.exe extract --url https://your-org.crm.dynamics.com`
+
+**Option 2: Framework-dependent** (Requires .NET 8.0) - Best for CI/CD:
+
+1. Ensure [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) is installed
+2. Download: [powerapps-schema-win-x64-framework-dependent.zip](https://github.com/glosrob/PowerApps.JsonSchema/releases)
+3. Extract and run as above (smaller download, ~5 MB vs ~70 MB)
 
 That's it! The tool will open a browser for authentication and extract your schema.
 
