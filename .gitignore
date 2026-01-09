@@ -24,6 +24,9 @@ bld/
 # Visual Studio cache/options
 .vs/
 
+# VS Code settings (user-specific)
+.vscode/
+
 # Generated schema files
 *-schema.json
 powerapp-schema*.json
@@ -39,3 +42,6 @@ artifacts/
 powerapp-schema*.json
 powerapp-schema*.xlsx
 powerapp-schema*.csv
+
+# Test scripts with credentials
+test-*.ps1
