@@ -21,11 +21,17 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
-    - name: Build Windows x64
-      run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish/win-x64
+    - name: Build Windows x64 (Self-contained)
+      run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish/win-x64-self-contained
       
-    - name: Create Windows ZIP
-      run: Compress-Archive -Path ./publish/win-x64/powerapps-schema.exe -DestinationPath ./powerapps-schema-win-x64.zip
+    - name: Build Windows x64 (Framework-dependent)
+      run: dotnet publish -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -o ./publish/win-x64-framework-dependent
+      
+    - name: Create Windows Self-contained ZIP
+      run: Compress-Archive -Path ./publish/win-x64-self-contained/powerapps-schema.exe -DestinationPath ./powerapps-schema-win-x64.zip
+      
+    - name: Create Windows Framework-dependent ZIP
+      run: Compress-Archive -Path ./publish/win-x64-framework-dependent/powerapps-schema.exe -DestinationPath ./powerapps-schema-win-x64-framework-dependent.zip
       
     - name: Get version from tag
       id: get_version
@@ -37,19 +43,39 @@ jobs:
       with:
         files: |
           powerapps-schema-win-x64.zip
+          powerapps-schema-win-x64-framework-dependent.zip
         body: |
           ## PowerApps Schema CLI ${{ steps.get_version.outputs.VERSION }}
           
+          ### Download Options
+          
+          **Self-contained** (`powerapps-schema-win-x64.zip`) - ~70-80 MB
+          - No .NET installation required
+          - Best for end users
+          - Runs anywhere on Windows 10/11
+          
+          **Framework-dependent** (`powerapps-schema-win-x64-framework-dependent.zip`) - ~5 MB
+          - Requires .NET 8.0 Runtime installed
+          - Best for CI/CD pipelines where .NET is already present
+          - Smaller download size
+          
           ### Features
           - Extract complete PowerApps/Dataverse environment metadata
+          - Multiple export formats: JSON, Excel (XLSX), CSV
+          - Attribute filtering (prefix and exclude options)
           - Filter by solution
-          - Interactive Microsoft authentication
-          - Self-contained executable - no .NET installation required
+          - Service principal authentication for automation
+          - Interactive Microsoft authentication for users
           
-          ### Download & Usage
+          ### Quick Start (Self-contained)
           1. Download `powerapps-schema-win-x64.zip`
           2. Extract the zip file
           3. Run: `powerapps-schema.exe extract --url https://your-org.crm.dynamics.com`
+          
+          ### Quick Start (Framework-dependent)
+          1. Ensure .NET 8.0 Runtime is installed: https://dotnet.microsoft.com/download/dotnet/8.0
+          2. Download `powerapps-schema-win-x64-framework-dependent.zip`
+          3. Extract and run: `powerapps-schema.exe extract --url https://your-org.crm.dynamics.com`
           
           See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for full documentation.
           
@@ -57,6 +83,7 @@ jobs:
           - Windows 10/11 or Windows Server 2016+
           - PowerApps/Dataverse environment access
           - System Administrator or System Customizer role
+          - .NET 8.0 Runtime (framework-dependent version only)
         draft: false
         prerelease: false
       env:
